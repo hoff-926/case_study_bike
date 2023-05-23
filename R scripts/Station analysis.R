@@ -1,8 +1,11 @@
 
+## ANALYSIS TO FIND THE MOST POPULAR STATION FOR CASUAL
+
 library(tidyverse)  #helps wrangle data
 library(lubridate)  #helps wrangle date attributes
 library(ggplot2)  #helps visualize data
 library(dplyr)
+library(stringr)
 
 getwd()
 
@@ -69,7 +72,7 @@ all_trips
 all_trips <- all_trips %>%  
   select(-c(start_lat, start_lng, end_lat, end_lng, birthyear, gender, "tripduration"))
 
-#Data cleaning
+# DATA CLEANING
 colnames(all_trips)
 nrow(all_trips)
 dim(all_trips)
@@ -110,15 +113,66 @@ all_trips_v2 <- all_trips[!(all_trips$start_station_name == "HQ QR" | all_trips$
 all_trips_v2
 nrow(all_trips_v2)
 
-
 nrow(all_trips_v2$start_station_id)
 
-all_trips_v2$start_station_id
 
-all_trips_v2 %>% sum(!is.na("start_station_id"))
-all_trips_v2 %>% count(!is.na("end_station_id"))
+## ANALYSIS 
 
-count(all_trips_v2)
+#Check for NULL values
+sum(is.na(all_trips_v2$end_station_name))
+
+all_trips_temp <- data.frame(all_trips_v2$day_of_week,
+                           all_trips_v2$start_station_name,
+                           all_trips_v2$start_station_id,
+                           all_trips_v2$member_casual)
+
+(all_trips_temp <- rename(all_trips_temp,
+                          day_of_week = all_trips_v2.day_of_week,
+                          start_station_name = all_trips_v2.start_station_name,
+                          start_station_id = all_trips_v2.start_station_id,
+                          member_casual = all_trips_v2.member_casual))
+
+all_trips_tib <- as.tibble(all_trips_temp)
+
+all_trips_tib <- all_trips_tib %>% 
+  arrange(member_casual, start_station_id)
+
+
+#Count the number of distinct start station names (613 stations)
+all_trips_tib %>% 
+  group_by(start_station_name) %>% 
+  summarise(count = n_distinct(start_station_name)) 
+
+#Number of times stations were used 
+all_trips_tib %>% 
+  count(start_station_name) 
+#Number of times stations were used by casuals only
+stations <- all_trips_tib %>% 
+  count(start_station_name, day_of_week, member_casual = "casual")
+
+stations
+
+#Finding the most popular station per day by casuals using INNER JOIN
+data1 <- stations %>% 
+  group_by(day_of_week) %>% 
+  summarize (n = max(n))
+data1
+
+data2 <- stations
+data2
+
+data3 <- inner_join(data1,data2, by = "n")
+data3
+data3 <- data3[, c("day_of_week.x", "n", "start_station_name")]
+
+(data3 <- rename(data3,
+                day_of_week = day_of_week.x))
+data3
+
+
+
+
+
 
 
 
