@@ -138,6 +138,8 @@ all_trips_tib <- all_trips_tib %>%
   arrange(member_casual, start_station_id)
 
 
+
+
 #Count the number of distinct start station names (613 stations)
 all_trips_tib %>% 
   group_by(start_station_name) %>% 
@@ -146,19 +148,29 @@ all_trips_tib %>%
 #Number of times stations were used 
 all_trips_tib %>% 
   count(start_station_name) 
-#Number of times stations were used by casuals only
-stations <- all_trips_tib %>% 
-  count(start_station_name, day_of_week, member_casual = "casual")
 
-stations
+
+
+#Number of times stations were used by casuals only
+cas_stations <- filter(all_trips_tib, member_casual == "casual") %>% 
+  count(start_station_name, day_of_week)
+
+
+cas_stations
+
+#Number of times stations were used by members only
+mem_stations <- filter(all_trips_tib, member_casual == "member") %>% 
+  count(start_station_name, day_of_week)
+
+mem_stations
 
 #Finding the most popular station per day by casuals using INNER JOIN
-data1 <- stations %>% 
+data1 <- cas_stations %>% 
   group_by(day_of_week) %>% 
   summarize (n = max(n))
 data1
 
-data2 <- stations
+data2 <- cas_stations
 data2
 
 data3 <- inner_join(data1,data2, by = "n")
@@ -167,12 +179,23 @@ data3 <- data3[, c("day_of_week.x", "n", "start_station_name")]
 
 (data3 <- rename(data3,
                 day_of_week = day_of_week.x))
+
 data3
 
+#Finding the most popular station per day by members using INNER JOIN
 
+data4 <- mem_stations %>% 
+  group_by(day_of_week) %>% 
+  summarize (n = max(n))
+data4
 
+data5 <- mem_stations
+data5
 
+data6 <- inner_join(data4,data5, by = "n")
+data6
+data6 <- data6[, c("day_of_week.x", "n", "start_station_name")]
 
-
+data6
 
 
